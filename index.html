@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>唐宋诗人旅行路线 · 指向塔</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js">
+    </script>
+    <!-- 中国地图 GeoJSON -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/map/js/china.js">
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #0b1a2f;
+            overflow: hidden;
+            font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+        }
+        #chart {
+            width: 100vw;
+            height: 100vh;
+            min-height: 500px;
+        }
+        .legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #e0e8f0;
+            background: rgba(6, 14, 24, 0.8);
+            backdrop-filter: blur(6px);
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 13px;
+            line-height: 1.9;
+            pointer-events: none;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            max-width: 160px;
+        }
+        .legend .dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .legend .dot.tower {
+            background: #1a1a1a;
+            border: 2px solid #ffd966;
+            box-shadow: 0 0 16px #ffd96666;
+            width: 14px;
+            height: 14px;
+        }
+        .legend .row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #ffd966;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        .footer {
+            position: absolute;
+            bottom: 16px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 12px;
+            letter-spacing: 1px;
+            font-weight: 300;
+            z-index: 10;
+        }
+        .main-title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffd966;
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-shadow: 0 0 30px rgba(255, 217, 102, 0.15);
+            z-index: 10;
+            background: rgba(6, 14, 24, 0.6);
+            padding: 8px 28px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 217, 102, 0.1);
+            backdrop-filter: blur(4px);
+        }
+        .main-title span {
+            font-size: 14px;
+            color: #8899aa;
+            font-weight: 300;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="chart"></div>
+
+    <div class="main-title">
+        🏮 唐宋诗人旅行路线
+        <span>· 汇聚黄鹤楼</span>
+    </div>
+
+    <div class="legend">
+        <div class="legend-title">✦ 诗人路径</div>
+        <div class="row"><span class="dot" style="background:#f94144;"></span> 李白</div>
+        <div class="row"><span class="dot" style="background:#f9c74f;"></span> 岳飞</div>
+        <div class="row"><span class="dot" style="background:#4d908e;"></span> 崔颢</div>
+        <div class="row"><span class="dot" style="background:#577590;"></span> 范成大</div>
+        <div class="row"><span class="dot" style="background:#9b5de5;"></span> 陆游</div>
+        <div class="row" style="margin-top:6px; border-top:1px solid #ffffff22; padding-top:6px;">
+            <span class="dot tower"></span> 黄鹤楼 🗼
+        </div>
+    </div>
+
+    <div class="footer">数据来源 · 唐宋诗人行迹 · 坐标：114.296944, 30.546944</div>
+
+    <script>
+        (function() {
+            const chartDom = document.getElementById('chart');
+            const myChart = echarts.init(chartDom, 'dark');
+
+            // ============================================================
+            // 1. 诗人坐标数据（根据您图中提取的经纬度）
+            // ============================================================
+            const poets = [{
+                name: '李白',
+                color: '#f94144',
+                coord: [114.35, 34.80],
+                // 李白在河南开封/郑州区域
+            }, {
+                name: '岳飞',
+                color: '#f9c74f',
+                coord: [112.15, 32.01],
+                // 岳飞在河南南阳/襄阳区域
+            }, {
+                name: '崔颢',
+                color: '#4d908e',
+                coord: [114.50, 34.60],
+                // 崔颢与李白临近
+            }, {
+                name: '范成大',
+                color: '#577590',
+                coord: [120.58, 30.03],
+                // 范成大在浙江杭州区域
+            }, {
+                name: '陆游',
+                color: '#9b5de5',
+                coord: [120.78, 29.83],
+                // 陆游在浙江杭州区域
+            }, ];
+
+            // ============================================================
+            // 2. 塔的位置（黄鹤楼） ← 您提供的坐标
+            // ============================================================
+            const towerCoord = [114.296944, 30.546944]; // 黄鹤楼
+
+            // ============================================================
+            // 3. 构建节点
+            // ============================================================
+            const nodes = [
+                // 塔节点（黄鹤楼）
+                {
+                    name: '黄鹤楼',
+                    value: '目标',
+                    symbolSize: 42,
+                    itemStyle: {
+                        color: '#1a1a1a',
+                        borderColor: '#ffd966',
+                        borderWidth: 3,
+                        shadowBlur: 28,
+                        shadowColor: '#ffd966aa',
+                    },
+                    label: {
+                        show: true,
+                        formatter: '🏯',
+                        fontSize: 34,
+                        color: '#ffd966',
+                        position: 'inside',
+                        fontWeight: 'bold',
+                    },
+                    coord: towerCoord,
+                },
+                // 诗人节点
+                ...poets.map(p => ({
+                    name: p.name,
+                    value: p.name,
+                    symbolSize: 30,
+                    itemStyle: {
+                        color: p.color,
+                        shadowBlur: 16,
+                        shadowColor: p.color + '66',
+                        borderColor: p.color,
+                        borderWidth: 2,
+                    },
+                    label: {
+                        show: true,
+                        formatter: p.name,
+                        position: 'bottom',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: '#e8edf3',
+                        textShadowBlur: 8,
+                        textShadowColor: '#000000cc',
+                        distance: 12,
+                    },
+                    coord: p.coord,
+                })),
+            ];
+
+            // ============================================================
+            // 4. 连线（所有诗人 → 黄鹤楼）
+            // ============================================================
+            const edges = poets.map(p => ({
+                source: p.name,
+                target: '黄鹤楼',
+                lineStyle: {
+                    color: p.color,
+                    width: 2.5,
+                    curveness: 0.2,
+                    opacity: 0.75,
+                    shadowBlur: 10,
+                    shadowColor: p.color + '55',
+                },
+                edgeSymbol: ['none', 'arrow'],
+                edgeSymbolSize: [0, 16],
+            }));
+
+            // ============================================================
+            // 5. ECharts 配置
+            // ============================================================
+            const option = {
+                geo: {
+                    map: 'china',
+                    roam: true,
+                    zoom: 1.1,
+                    center: [112, 33],
+                    itemStyle: {
+                        areaColor: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [
+                                { offset: 0, color: '#0f2840' },
+                                { offset: 1, color: '#06121e' },
+                            ],
+                        },
+                        borderColor: '#2a4a6a',
+                        borderWidth: 1.2,
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            areaColor: '#1a405a',
+                        },
+                        label: {
+                            show: false,
+                        },
+                    },
+                    label: {
+                        show: false,
+                    },
+                    regions: [{
+                        name: '湖北',
+                        itemStyle: {
+                            areaColor: '#1a3a50',
+                        },
+                    }, ],
+                },
+
+                tooltip: {
+                    trigger: 'item',
+                    formatter: (params) => {
+                        if (params.dataType === 'node') {
+                            const coord = params.data.coord;
+                            const isTower = params.name === '黄鹤楼';
+                            return `
+                                <strong style="font-size:16px;color:${isTower ? '#ffd966' : '#ffaa66'};">${params.name}</strong>
+                                <br/>📍 经度：${coord?.[0]?.toFixed(6) || '--'}
+                                <br/>📍 纬度：${coord?.[1]?.toFixed(6) || '--'}
+                                <br/>🏷️ ${isTower ? '🗼 目标塔 · 黄鹤楼' : '📜 诗人节点'}
+                                ${isTower ? '<br/>🏯 天下江山第一楼' : ''}
+                            `;
+                        }
+                        return `
+                            <strong>${params.data.source}</strong> 
+                            <span style="color:#ffaa66;">→</span> 
+                            <strong>${params.data.target}</strong>
+                        `;
+                    },
+                    backgroundColor: 'rgba(10,20,35,0.9)',
+                    borderColor: '#ffd96644',
+                    borderWidth: 1,
+                    textStyle: { color: '#d0dcec', fontSize: 13 },
+                    extraCssText: 'border-radius:8px;padding:12px 16px;',
+                },
+
+                series: [{
+                    type: 'graph',
+                    coordinateSystem: 'geo',
+                    layout: 'none',
+                    data: nodes,
+                    edges: edges,
+                    roam: true,
+                    draggable: true,
+
+                    lineStyle: {
+                        color: 'source',
+                        width: 2,
+                        curveness: 0.2,
+                        opacity: 0.6,
+                    },
+                    edgeSymbol: ['none', 'arrow'],
+                    edgeSymbolSize: [0, 12],
+
+                    emphasis: {
+                        focus: 'adjacency',
+                        lineStyle: {
+                            width: 5,
+                            opacity: 1,
+                            shadowBlur: 20,
+                            shadowColor: '#ffffff44',
+                        },
+                        itemStyle: {
+                            shadowBlur: 30,
+                            shadowColor: '#ffffff88',
+                        },
+                    },
+
+                    animationDuration: 1500,
+                    animationEasing: 'cubicOut',
+                }],
+            };
+
+            myChart.setOption(option);
+
+            // ============================================================
+            // 6. 脉冲动画
+            // ============================================================
+            let phase = 0;
+
+            function pulseEdges() {
+                phase += 0.06;
+                const pulse = 0.4 + 0.6 * Math.sin(phase);
+
+                try {
+                    const opt = myChart.getOption();
+                    if (!opt || !opt.series || !opt.series[0]) return;
+                    const edgesNow = opt.series[0].edges;
+                    if (!edgesNow || edgesNow.length === 0) return;
+
+                    const updatedEdges = edgesNow.map((edge) => ({
+                        ...edge,
+                        lineStyle: {
+                            ...edge.lineStyle,
+                            width: 1.8 + 2.2 * pulse,
+                            opacity: 0.4 + 0.6 * pulse,
+                            shadowBlur: 8 * pulse,
+                        },
+                        edgeSymbolSize: [0, 8 + 10 * pulse],
+                    }));
+
+                    myChart.setOption({
+                        series: [{ edges: updatedEdges }]
+                    });
+                } catch (e) {}
+            }
+
+            const pulseInterval = setInterval(pulseEdges, 80);
+
+            // ============================================================
+            // 7. 自适应 + 交互
+            // ============================================================
+            window.addEventListener('resize', () => {
+                myChart.resize();
+            });
+
+            myChart.on('click', (params) => {
+                if (params.dataType === 'node') {
+                    const coord = params.data.coord;
+                    const msg = `
+                        🏮 ${params.name}
+                        📍 ${coord?.[0]?.toFixed(6)}, ${coord?.[1]?.toFixed(6)}
+                        ${params.name === '黄鹤楼' ? '🏯 天下江山第一楼' : '📜 唐宋诗人'}
+                    `;
+                    console.log(msg);
+                    // 如需弹窗取消注释
+                    // alert(msg);
+                }
+            });
+
+            window.addEventListener('beforeunload', () => {
+                clearInterval(pulseInterval);
+            });
+
+            console.log('✅ 唐宋诗人路线图 · 已启动');
+            console.log('🗼 目标塔（黄鹤楼）坐标：', towerCoord);
+            console.log('📍 诗人坐标：', poets.map(p => `${p.name}: ${p.coord}`).join(' | '));
+        })();
+    </script>
+
+</body>
+</html>
