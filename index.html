@@ -1,682 +1,385 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>古代诗人前往黄鹤楼 - 流动箭头动画</title>
-<link rel="stylesheet" href="https://js.geoscene.cn/4.28/geoscene/themes/dark/main.css" />
-<style>
-html, body, #viewDiv {
-padding: 0;
-margin: 0;
-height: 100%;
-width: 100%;
-font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-}
-#title-panel {
-position: absolute;
-top: 15px;
-left: 50%;
-transform: translateX(-50%);
-z-index: 99;
-background: rgba(20, 30, 48, 0.85);
-color: #ffd700;
-padding: 12px 30px;
-border-radius: 8px;
-border: 1px solid rgba(255, 215, 0, 0.4);
-font-size: 18px;
-font-weight: bold;
-letter-spacing: 2px;
-box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-pointer-events: none;
-}
-#legend-panel {
-position: absolute;
-bottom: 20px;
-left: 20px;
-z-index: 99;
-background: rgba(20, 30, 48, 0.85);
-color: #fff;
-padding: 15px 20px;
-border-radius: 8px;
-border: 1px solid rgba(255, 255, 255, 0.2);
-font-size: 13px;
-box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-max-width: 260px;
-}
-#legend-panel h4 {
-margin: 0 0 10px 0;
-color: #ffd700;
-font-size: 15px;
-border-bottom: 1px solid rgba(255, 215, 0, 0.3);
-padding-bottom: 6px;
-}
-.legend-item {
-display: flex;
-align-items: center;
-margin: 6px 0;
-}
-.legend-color {
-width: 16px;
-height: 16px;
-border-radius: 50%;
-margin-right: 10px;
-flex-shrink: 0;
-}
-.legend-line {
-width: 30px;
-height: 3px;
-margin-right: 10px;
-border-radius: 2px;
-flex-shrink: 0;
-}
-#control-panel {
-position: absolute;
-top: 70px;
-right: 20px;
-z-index: 99;
-background: rgba(20, 30, 48, 0.85);
-color: #fff;
-padding: 12px 16px;
-border-radius: 8px;
-border: 1px solid rgba(255, 255, 255, 0.2);
-font-size: 13px;
-box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-#control-panel button {
-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-color: #fff;
-border: none;
-padding: 8px 18px;
-border-radius: 6px;
-cursor: pointer;
-font-size: 13px;
-margin: 4px;
-transition: all 0.3s;
-}
-#control-panel button:hover {
-transform: translateY(-1px);
-box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-#control-panel button.active {
-background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-#basemap-panel {
-position: absolute;
-top: 70px;
-left: 20px;
-z-index: 99;
-background: rgba(20, 30, 48, 0.85);
-color: #fff;
-padding: 12px 14px;
-border-radius: 8px;
-border: 1px solid rgba(255, 255, 255, 0.2);
-font-size: 13px;
-box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-max-width: 200px;
-}
-#basemap-panel h4 {
-margin: 0 0 10px 0;
-color: #ffd700;
-font-size: 14px;
-border-bottom: 1px solid rgba(255, 215, 0, 0.3);
-padding-bottom: 6px;
-}
-.basemap-grid {
-display: grid;
-grid-template-columns: repeat(2, 1fr);
-gap: 6px;
-}
-.basemap-btn {
-position: relative;
-width: 100%;
-height: 42px;
-border: 2px solid rgba(255,255,255,0.25);
-border-radius: 6px;
-cursor: pointer;
-overflow: hidden;
-transition: all 0.25s;
-padding: 0;
-}
-.basemap-btn:hover {
-transform: scale(1.04);
-box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3);
-}
-.basemap-btn.active {
-border-color: #ffd700;
-box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.35);
-}
-.basemap-btn .bm-preview {
-width: 100%;
-height: 100%;
-display: block;
-}
-.basemap-btn .bm-label {
-position: absolute;
-left: 0; right: 0; bottom: 0;
-background: rgba(0, 0, 0, 0.65);
-color: #fff;
-font-size: 11px;
-padding: 2px 0;
-text-align: center;
-line-height: 1.2;
-}
-.bm-streets { background: linear-gradient(135deg,#e8f2d9 0%,#b7d4a3 50%,#f4e4c1 100%); }
-.bm-topo    { background: linear-gradient(135deg,#d9e4b5 0%,#9db56f 40%,#c8a36a 100%); border-top:2px dashed #a77; }
-.bm-sat     { background: linear-gradient(135deg,#1a3e4f 0%,#2e5d4f 40%,#4d3d2f 100%); }
-.bm-hybrid  { background: linear-gradient(135deg,#0e2b3c 0%,#1f4a40 50%,#5c4230 100%); color:#fff; text-shadow:0 0 2px #000;}
-.bm-dark    { background: linear-gradient(135deg,#2a2a35 0%,#3d3d4a 50%,#2e2e38 100%); }
-.bm-light   { background: linear-gradient(135deg,#eaeaea 0%,#f5f5f5 50%,#dedede 100%); }
-.bm-transparent { background: repeating-linear-gradient(45deg,#fafafa,#fafafa 6px,#e0e0e0 6px,#e0e0e0 12px); }
-html, body, #viewDiv { background: transparent !important; }
-body.transparent-mode .esri-view-surface { background: transparent !important; }
-</style>
-<script src="https://js.geoscene.cn/4.28/"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>古代诗人前往黄鹤楼 - 流动箭头动画</title>
+  <link rel="stylesheet" href="https://js.geoscene.cn/4.28/geoscene/themes/dark/main.css" />
+  <style>
+    html, body, #viewDiv { padding:0; margin:0; height:100%; width:100%; font-family:"Microsoft YaHei","PingFang SC",sans-serif; }
+    #title-panel { position:absolute; top:15px; left:50%; transform:translateX(-50%); z-index:99; background:rgba(20,30,48,0.88); color:#ffd700; padding:10px 28px; border-radius:8px; border:1px solid rgba(255,215,0,0.4); font-size:17px; font-weight:bold; letter-spacing:2px; box-shadow:0 4px 15px rgba(0,0,0,0.3); pointer-events:none; }
+    #legend-panel { position:absolute; bottom:20px; left:20px; z-index:99; background:rgba(20,30,48,0.88); color:#fff; padding:14px 18px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); font-size:13px; box-shadow:0 4px 15px rgba(0,0,0,0.3); max-width:250px; }
+    #legend-panel h4 { margin:0 0 10px 0; color:#ffd700; font-size:14px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:6px; }
+    .legend-item { display:flex; align-items:center; margin:6px 0; }
+    .legend-color { width:16px; height:16px; border-radius:50%; margin-right:10px; flex-shrink:0; }
+    .legend-line { width:30px; height:3px; margin-right:10px; border-radius:2px; flex-shrink:0; }
+    #control-panel { position:absolute; top:70px; right:20px; z-index:99; background:rgba(20,30,48,0.88); color:#fff; padding:10px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); font-size:13px; box-shadow:0 4px 15px rgba(0,0,0,0.3); }
+    #control-panel .panel-title { margin-bottom:8px; color:#ffd700; font-weight:bold; }
+    #control-panel button { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; padding:7px 16px; border-radius:6px; cursor:pointer; font-size:13px; margin:3px; transition:all .3s; }
+    #control-panel button:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(102,126,234,0.4); }
+    #control-panel button.active { background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%); }
+    #basemap-panel { position:absolute; top:70px; left:20px; z-index:99; background:rgba(20,30,48,0.88); color:#fff; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); font-size:13px; box-shadow:0 4px 15px rgba(0,0,0,0.3); max-width:190px; }
+    #basemap-panel h4 { margin:0 0 10px 0; color:#ffd700; font-size:13px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:6px; }
+    .basemap-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:5px; }
+    .basemap-btn { position:relative; width:100%; height:40px; border:2px solid rgba(255,255,255,0.25); border-radius:6px; cursor:pointer; overflow:hidden; transition:all .25s; padding:0; }
+    .basemap-btn:hover { transform:scale(1.04); box-shadow:0 3px 10px rgba(255,215,0,0.3); }
+    .basemap-btn.active { border-color:#ffd700; box-shadow:0 0 0 2px rgba(255,215,0,0.35); }
+    .basemap-btn .bm-preview { width:100%; height:100%; display:block; }
+    .basemap-btn .bm-label { position:absolute; left:0; right:0; bottom:0; background:rgba(0,0,0,0.65); color:#fff; font-size:11px; padding:2px 0; text-align:center; line-height:1.2; }
+    .bm-streets { background:linear-gradient(135deg,#e8f2d9 0%,#b7d4a3 50%,#f4e4c1 100%); }
+    .bm-topo    { background:linear-gradient(135deg,#d9e4b5 0%,#9db56f 40%,#c8a36a 100%); border-top:2px dashed #a77; }
+    .bm-sat     { background:linear-gradient(135deg,#1a3e4f 0%,#2e5d4f 40%,#4d3d2f 100%); }
+    .bm-comm    { background:linear-gradient(135deg,#e6d5b8 0%,#a3b5c9 50%,#b8a3c9 100%); }
+    .bm-gray    { background:linear-gradient(135deg,#eaeaea 0%,#f5f5f5 50%,#dedede 100%); }
+    .bm-warm    { background:linear-gradient(135deg,#f5e6d3 0%,#e8c9a3 50%,#c9a078 100%); }
+    .bm-transparent { background:repeating-linear-gradient(45deg,#fafafa,#fafafa 6px,#e0e0e0 6px,#e0e0e0 12px); }
+  </style>
+  <script src="https://js.geoscene.cn/4.28/"></script>
 </head>
 <body>
-<div id="viewDiv"></div>
-<div id="title-panel">🏯 古代诗人赴黄鹤楼之旅 🏯</div>
-<div id="basemap-panel">
-<h4>🗺 底图切换</h4>
-<h4>🗺 底图切换（天地图·国内可用）</h4>
-<div class="basemap-grid">
-<button class="basemap-btn active" data-basemap="streets-vector" title="彩色街道图（中文注记）✅推荐">
-<div class="bm-preview bm-streets"></div><div class="bm-label">街道图</div>
-<button class="basemap-btn active" data-basemap="tianditu-vector" title="✅推荐：天地图矢量街道（完整中文注记）">
-<div class="bm-preview bm-streets"></div><div class="bm-label">天地图·街道</div>
-</button>
-<button class="basemap-btn" data-basemap="topo-vector" title="地形晕渲图">
-<div class="bm-preview bm-topo"></div><div class="bm-label">地形图</div>
-<button class="basemap-btn" data-basemap="tianditu-topography" title="天地图地形图（带晕渲）">
-<div class="bm-preview bm-topo"></div><div class="bm-label">天地图·地形</div>
-</button>
-<button class="basemap-btn" data-basemap="satellite" title="高清卫星影像">
-<div class="bm-preview bm-sat"></div><div class="bm-label">卫星图</div>
-<button class="basemap-btn" data-basemap="tianditu-image" title="天地图高清卫星影像（带注记）">
-<div class="bm-preview bm-sat"></div><div class="bm-label">天地图·影像</div>
-</button>
-<button class="basemap-btn" data-basemap="hybrid" title="卫星影像+注记">
-<div class="bm-preview bm-hybrid"></div><div class="bm-label">影像+注记</div>
-<button class="basemap-btn" data-basemap="geoscene-community" title="GeoScene 社区版街道图">
-<div class="bm-preview bm-hybrid"></div><div class="bm-label">社区街道</div>
-</button>
-<button class="basemap-btn" data-basemap="dark-gray-vector" title="暗色简约风格">
-<div class="bm-preview bm-dark"></div><div class="bm-label">暗色底图</div>
-<button class="basemap-btn" data-basemap="geoscene-gray" title="GeoScene 灰色简约风格">
-<div class="bm-preview bm-light"></div><div class="bm-label">浅灰简约</div>
-</button>
-<button class="basemap-btn" data-basemap="gray-vector" title="浅色简约风格">
-<div class="bm-preview bm-light"></div><div class="bm-label">浅色底图</div>
-<button class="basemap-btn" data-basemap="geoscene-warm" title="GeoScene 暖色复古风格">
-<div class="bm-preview bm-dark"></div><div class="bm-label">暖色复古</div>
-</button>
-</div>
-<div style="margin-top:10px;">
-<button class="basemap-btn" data-basemap="transparent" title="透明模式（无地理底图，仅显示箭头）" style="width:100%;height:38px;">
-<div class="bm-preview bm-transparent"></div><div class="bm-label">透明模式（仅箭头）</div>
-</button>
-</div>
-</div>
-<div id="control-panel">
-<div style="margin-bottom:8px;color:#ffd700;font-weight:bold;">动画控制</div>
-<button id="btnPlay" class="active">▶ 播放动画</button>
-<button id="btnPause">⏸ 暂停</button>
-<button id="btnReset">↺ 重置</button>
-</div>
-<div id="legend-panel">
-<h4>📜 诗人与目的地</h4>
-<div class="legend-item">
-<div class="legend-color" style="background:#e74c3c;"></div>
-<span>李白（2处起点）</span>
-</div>
-<div class="legend-item">
-<div class="legend-color" style="background:#3498db;"></div>
-<span>岳飞</span>
-</div>
-<div class="legend-item">
-<div class="legend-color" style="background:#27ae60;"></div>
-<span>崔颢</span>
-</div>
-<div class="legend-item">
-<div class="legend-color" style="background:#9b59b6;"></div>
-<span>范成大</span>
-</div>
-<div class="legend-item">
-<div class="legend-color" style="background:#f39c12;"></div>
-<span>陆游</span>
-</div>
-<div style="height:1px;background:rgba(255,255,255,0.15);margin:10px 0;"></div>
-<div class="legend-item">
-<div class="legend-color" style="background:#ffd700;border:2px solid #ff6b6b;"></div>
-<span>黄鹤楼（终点）</span>
-</div>
-<div class="legend-item">
-<div class="legend-line" style="background:linear-gradient(90deg,#ff6b6b,#ffd700);"></div>
-<span>流动路径（箭头指向）</span>
-</div>
-</div>
- 
-<script>
-require([
-"geoscene/Map",
-"geoscene/views/MapView",
-"geoscene/Graphic",
-"geoscene/layers/GraphicsLayer",
-"geoscene/layers/WebTileLayer",
-"geoscene/Basemap",
-"geoscene/geometry/Point",
-"geoscene/geometry/Polyline",
-"geoscene/symbols/SimpleMarkerSymbol",
-"geoscene/symbols/SimpleLineSymbol",
-"geoscene/symbols/TextSymbol",
-"geoscene/symbols/PictureMarkerSymbol",
-"geoscene/Color",
-"geoscene/geometry/support/geodesicUtils",
-"geoscene/geometry/support/spatialReferenceUtils"
-], function(
-Map, MapView, Graphic, GraphicsLayer, WebTileLayer, Basemap, Point, Polyline,
-SimpleMarkerSymbol, SimpleLineSymbol, TextSymbol, PictureMarkerSymbol,
-Color, geodesicUtils, spatialReferenceUtils
-) {
- 
-const poets = [
-{ name: "崔颢",   lng: 114.35, lat: 34.80, color: "#27ae60", poem: "昔人已乘黄鹤去，此地空余黄鹤楼" },
-{ name: "李白",   lng: 103.75, lat: 29.23, color: "#e74c3c", poem: "故人西辞黄鹤楼，烟花三月下扬州" },
-{ name: "李白",   lng: 113.68, lat: 31.26, color: "#e74c3c", poem: "黄鹤楼中吹玉笛，江城五月落梅花" },
-{ name: "陆游",   lng: 120.58, lat: 30.03, color: "#f39c12", poem: "苍龙阙角归何晚，黄鹤楼中醉不知" },
-{ name: "范成大", lng: 104.07, lat: 30.57, color: "#9b59b6", poem: "谁将玉笛传新曲，黄鹤楼前共月明" },
-{ name: "岳飞",   lng: 112.15, lat: 32.01, color: "#3498db", poem: "何日请缨提锐旅，一鞭直渡清河洛" }
-];
- 
-const hhl = { name: "黄鹤楼", lng: 114.296944, lat: 30.546944 };
- 
-const map = new Map({
-basemap: (function() {
-try {
-var cdn = "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png";
-var subs = ["a","b","c"];
-var tileLyr = new WebTileLayer({
-urlTemplate: cdn,
-subDomains: subs,
-copyright: "© OpenStreetMap contributors"
-});
-return new Basemap({ baseLayers: [tileLyr] });
-} catch(e) {
-return "gray-vector";
-}
-})()
-basemap: "tianditu-vector"
-});
- 
-const view = new MapView({
-container: "viewDiv",
-map: map,
-center: [112, 31.5],
-zoom: 5,
-constraints: {
-minZoom: 4,
-maxZoom: 12
-},
-ui: {
-components: ["zoom", "compass"]
-}
-});
- 
-const poetLayer = new GraphicsLayer({ title: "诗人点位" });
-const lineLayer = new GraphicsLayer({ title: "路径线条" });
-const flowLayer = new GraphicsLayer({ title: "流动箭头" });
-const hhlLayer  = new GraphicsLayer({ title: "黄鹤楼" });
- 
-try {
-map.layers.addMany([lineLayer, poetLayer, flowLayer, hhlLayer]);
-} catch(e) {
-map.add(lineLayer);
-map.add(poetLayer);
-map.add(flowLayer);
-map.add(hhlLayer);
-}
- 
-function createBezierCurve(start, end, curvature = 0.25, segments = 120) {
-const dx = end[0] - start[0];
-const dy = end[1] - start[1];
-const dist = Math.sqrt(dx * dx + dy * dy);
-const mx = (start[0] + end[0]) / 2;
-const my = (start[1] + end[1]) / 2;
-const nx = -dy / dist;
-const ny =  dx / dist;
-const offset = dist * curvature;
-const cx = mx + nx * offset;
-const cy = my + ny * offset;
-const pts = [];
-for (let i = 0; i <= segments; i++) {
-const t = i / segments;
-const x = (1-t)*(1-t)*start[0] + 2*(1-t)*t*cx + t*t*end[0];
-const y = (1-t)*(1-t)*start[1] + 2*(1-t)*t*cy + t*t*end[1];
-pts.push([x, y]);
-}
-return pts;
-}
- 
-function interpolateOnCurve(points, t) {
-const n = points.length - 1;
-const exact = t * n;
-const idx = Math.min(Math.floor(exact), n - 1);
-const frac = exact - idx;
-const p0 = points[idx];
-const p1 = points[idx + 1];
-return [
-p0[0] + (p1[0] - p0[0]) * frac,
-p0[1] + (p1[1] - p0[1]) * frac
-];
-}
- 
-const routes = [];
- 
-function initMap() {
-poets.forEach((poet, idx) => {
-const poetPoint = new Point({
-longitude: poet.lng,
-latitude: poet.lat
-});
-const poetSymbol = new SimpleMarkerSymbol({
-color: poet.color,
-size: 12,
-outline: { color: [255, 255, 255, 0.9], width: 2 }
-});
-const poetAttr = { name: poet.name, poem: poet.poem };
-const poetGraphic = new Graphic({
-geometry: poetPoint,
-symbol: poetSymbol,
-attributes: poetAttr,
-popupTemplate: {
-title: "诗人：{name}",
-content: "<b>出发地坐标：</b>[" + poet.lng + ", " + poet.lat + "]<br><b>与黄鹤楼相关诗句：</b><br><i>「{poem}」</i>"
-}
-});
-poetLayer.add(poetGraphic);
- 
-const labelSymbol = new TextSymbol({
-text: poet.name,
-color: poet.color,
-haloColor: "rgba(255,255,255,0.9)",
-haloSize: 1.5,
-font: { size: 14, weight: "bold", family: "Microsoft YaHei" },
-yoffset: 18
-});
-poetLayer.add(new Graphic({ geometry: poetPoint, symbol: labelSymbol }));
- 
-const curvePoints = createBezierCurve(
-[poet.lng, poet.lat],
-[hhl.lng, hhl.lat],
-0.18 + (idx % 3) * 0.06
-);
-const lineColor = new Color(poet.color);
-lineColor.a = 0.35;
-const baseLine = new Polyline({ paths: [curvePoints] });
-const baseSymbol = new SimpleLineSymbol({
-color: lineColor,
-width: 2,
-style: "dash"
-});
-lineLayer.add(new Graphic({ geometry: baseLine, symbol: baseSymbol }));
- 
-const brightColor = new Color(poet.color);
-brightColor.a = 0.9;
-const headSymbol = new SimpleLineSymbol({
-color: brightColor,
-width: 4
-});
- 
-routes.push({
-poet: poet,
-curvePoints: curvePoints,
-headGraphic: null,
-headSymbol: headSymbol,
-tailGraphics: [],
-progress: Math.random() * 0.3,
-speed: 0.0018 + Math.random() * 0.0012
-});
-});
- 
-const hhlPoint = new Point({ longitude: hhl.lng, latitude: hhl.lat });
-const hhlSymbol = new SimpleMarkerSymbol({
-color: "#ffd700",
-size: 22,
-outline: { color: "#ff6b6b", width: 3.5 }
-});
-const hhlGraphic = new Graphic({
-geometry: hhlPoint,
-symbol: hhlSymbol,
-attributes: { name: "黄鹤楼", addr: "湖北省武汉市武昌区蛇山之巅" },
-popupTemplate: {
-title: "🏯 {name}",
-content: "<b>位置：</b>{addr}<br><b>经纬度：</b>[" + hhl.lng.toFixed(4) + ", " + hhl.lat.toFixed(4) + "]<br><br><b>历代诗人在此留下无数千古名篇</b>"
-}
-});
-hhlLayer.add(hhlGraphic);
- 
-const hhlLabel = new TextSymbol({
-text: "黄鹤楼",
-color: "#ffd700",
-haloColor: "rgba(0,0,0,0.8)",
-haloSize: 2,
-font: { size: 17, weight: "bold", family: "Microsoft YaHei" },
-yoffset: 28
-});
-hhlLayer.add(new Graphic({ geometry: hhlPoint, symbol: hhlLabel }));
- 
-const starSymbol = new TextSymbol({
-text: "★",
-color: "#ff6b6b",
-font: { size: 14 },
-yoffset: 52
-});
-hhlLayer.add(new Graphic({ geometry: hhlPoint, symbol: starSymbol }));
-}
- 
-let animHandle = null;
-let isPlaying = false;
- 
-function updateFlow() {
-routes.forEach(route => {
-if (route.headGraphic) {
-flowLayer.remove(route.headGraphic);
-}
-route.tailGraphics.forEach(g => flowLayer.remove(g));
-route.tailGraphics = [];
- 
-const t = route.progress;
-const tailLen = 0.06;
-const tailStart = Math.max(0, t - tailLen);
- 
-if (t - tailStart > 0.001) {
-const segs = 14;
-for (let s = 0; s < segs; s++) {
-const st = tailStart + (t - tailStart) * (s / segs);
-const et = tailStart + (t - tailStart) * ((s + 1) / segs);
-const segStart = interpolateOnCurve(route.curvePoints, st);
-const segEnd   = interpolateOnCurve(route.curvePoints, et);
-const alpha = 0.15 + (s / segs) * 0.75;
-const w = 1.5 + (s / segs) * 4.5;
-const c = new Color(route.poet.color);
-c.a = alpha;
-route.tailGraphics.push(new Graphic({
-geometry: new Polyline({ paths: [[segStart, segEnd]] }),
-symbol: new SimpleLineSymbol({ color: c, width: w })
-}));
-}
-route.tailGraphics.forEach(g => flowLayer.add(g));
-}
- 
-const headPos = interpolateOnCurve(route.curvePoints, t);
-const prevPos = interpolateOnCurve(route.curvePoints, Math.max(0, t - 0.004));
-const angle = Math.atan2(headPos[1] - prevPos[1], headPos[0] - prevPos[0]) * 180 / Math.PI;
- 
-const arrowSvg =
-'<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">' +
-'<defs><filter id="glow"><feGaussianBlur stdDeviation="1.5" result="c"/><feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>' +
-'<polygon points="30,16 8,4 12,16 8,28" fill="' + route.poet.color + '" stroke="white" stroke-width="1.5" filter="url(#glow)"/>' +
-'</svg>';
-const arrowSymbol = new PictureMarkerSymbol({
-url: "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(arrowSvg))),
-width: "30px",
-height: "30px",
-angle: -angle
-});
-route.headGraphic = new Graphic({
-geometry: new Point({ longitude: headPos[0], latitude: headPos[1] }),
-symbol: arrowSymbol
-});
-flowLayer.add(route.headGraphic);
- 
-route.progress += route.speed;
-if (route.progress > 1) {
-route.progress = 0;
-}
-});
-}
- 
-function startAnim() {
-if (isPlaying) return;
-isPlaying = true;
-document.getElementById("btnPlay").classList.add("active");
-document.getElementById("btnPause").classList.remove("active");
-function tick() {
-updateFlow();
-animHandle = requestAnimationFrame(tick);
-}
-tick();
-}
- 
-function pauseAnim() {
-isPlaying = false;
-document.getElementById("btnPause").classList.add("active");
-document.getElementById("btnPlay").classList.remove("active");
-if (animHandle) { cancelAnimationFrame(animHandle); animHandle = null; }
-}
- 
-function resetAnim() {
-pauseAnim();
-routes.forEach(r => r.progress = Math.random() * 0.3);
-flowLayer.removeAll();
-}
- 
-function makeTileBasemap(config) {
-try {
-var layer = new WebTileLayer({
-urlTemplate: config.url,
-subDomains: config.subs || ["a","b","c"],
-copyright: config.copy || ""
-});
-var extras = (config.overlays || []).map(function(ocfg){
-return new WebTileLayer({
-urlTemplate: ocfg.url,
-subDomains: ocfg.subs || ["a","b","c","d"],
-copyright: ocfg.copy || ""
-});
-});
-return new Basemap({ baseLayers: [layer].concat(extras) });
-} catch(e) {
-return null;
-}
-}
- 
-var TILE_PRESETS = {
-"streets-vector": {
-url: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png",
-subs: ["a","b","c"],
-copy: "© OpenStreetMap contributors"
-},
-"topo-vector": {
-url: "https://{subDomain}.tile.opentopomap.org/{level}/{col}/{row}.png",
-subs: ["a","b","c"],
-copy: "© OpenTopoMap (CC-BY-SA)"
-},
-"satellite": {
-url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{level}/{row}/{col}",
-subs: [],
-copy: "© Esri World Imagery"
-},
-"hybrid": {
-url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{level}/{row}/{col}",
-subs: [],
-copy: "© Esri World Imagery + CARTO Labels",
-overlays: [{
-url: "https://{subDomain}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{level}/{col}/{row}{@2x}.png",
-subs: ["a","b","c","d"]
-}]
-},
-"dark-gray-vector": {
-url: "https://{subDomain}.basemaps.cartocdn.com/dark_all/{level}/{col}/{row}{@2x}.png",
-subs: ["a","b","c","d"],
-copy: "© CARTO Dark Matter"
-},
-"gray-vector": {
-url: "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}{@2x}.png",
-subs: ["a","b","c","d"],
-copy: "© CARTO Voyager Light"
-}
-var FALLBACK_BASEMAP = "tianditu-vector";
-var OFFICIAL_GEOSCENE_BASEMAPS = {
-"tianditu-vector": true,
-"tianditu-topography": true,
-"tianditu-image": true,
-"geoscene-blue": true,
-"geoscene-community": true,
-"geoscene-gray": true,
-"geoscene-warm": true
-};
- 
-function switchBasemap(basemapId, btnEl) {
-document.querySelectorAll(".basemap-btn").forEach(b => b.classList.remove("active"));
-if (btnEl) btnEl.classList.add("active");
-if (basemapId === "transparent") {
-try { map.basemap = null; } catch(e){}
-try { document.body.classList.add("transparent-mode"); } catch(e){}
-try {
-var s = document.querySelector(".esri-view-surface");
-if (s) s.style.background = "transparent";
-} catch(e){}
-return;
-}
-try { document.body.classList.remove("transparent-mode"); } catch(e){}
-try {
-var s = document.querySelector(".esri-view-surface");
-if (s) s.style.background = "";
-} catch(e){}
-try {
-var cfg = TILE_PRESETS[basemapId];
-if (cfg) {
-var bm = makeTileBasemap(cfg);
-if (bm) { map.basemap = bm; return; }
-if (!OFFICIAL_GEOSCENE_BASEMAPS[basemapId]) {
-basemapId = FALLBACK_BASEMAP;
-}
-map.basemap = "gray-vector";
-map.basemap = basemapId;
-} catch(err) {
-try {
-map.basemap = makeTileBasemap(TILE_PRESETS["streets-vector"]);
-} catch(e){}
-try { map.basemap = FALLBACK_BASEMAP; } catch(e){}
-}
-}
- 
-view.when(function() {
-initMap();
-setTimeout(startAnim, 600);
- 
-document.getElementById("btnPlay").onclick  = startAnim;
-document.getElementById("btnPause").onclick = pauseAnim;
-document.getElementById("btnReset").onclick = resetAnim;
- 
-document.querySelectorAll(".basemap-btn").forEach(btn => {
-btn.onclick = function() {
-switchBasemap(btn.getAttribute("data-basemap"), btn);
-};
-});
-});
-});
-</script>
+  <div id="viewDiv"></div>
+  <div id="title-panel">古代诗人赴黄鹤楼之旅</div>
+
+  <div id="basemap-panel">
+    <h4>底图切换</h4>
+    <div class="basemap-grid">
+      <button class="basemap-btn active" data-bm="tianditu-vector" title="天地图街道（推荐）">
+        <div class="bm-preview bm-streets"></div><div class="bm-label">天地图街道</div>
+      </button>
+      <button class="basemap-btn" data-bm="tianditu-topography" title="天地图地形">
+        <div class="bm-preview bm-topo"></div><div class="bm-label">天地图地形</div>
+      </button>
+      <button class="basemap-btn" data-bm="tianditu-image" title="天地图影像">
+        <div class="bm-preview bm-sat"></div><div class="bm-label">天地图影像</div>
+      </button>
+      <button class="basemap-btn" data-bm="geoscene-community" title="社区街道">
+        <div class="bm-preview bm-comm"></div><div class="bm-label">社区街道</div>
+      </button>
+      <button class="basemap-btn" data-bm="geoscene-gray" title="浅灰简约">
+        <div class="bm-preview bm-gray"></div><div class="bm-label">浅灰简约</div>
+      </button>
+      <button class="basemap-btn" data-bm="geoscene-warm" title="暖色古风">
+        <div class="bm-preview bm-warm"></div><div class="bm-label">暖色古风</div>
+      </button>
+    </div>
+    <div style="margin-top:8px;">
+      <button class="basemap-btn" data-bm="transparent" title="仅箭头（透明）" style="width:100%;height:36px;">
+        <div class="bm-preview bm-transparent"></div><div class="bm-label">仅箭头（透明）</div>
+      </button>
+    </div>
+  </div>
+
+  <div id="control-panel">
+    <div class="panel-title">动画控制</div>
+    <button id="btnPlay" class="active">播放</button>
+    <button id="btnPause">暂停</button>
+    <button id="btnReset">重置</button>
+  </div>
+
+  <div id="legend-panel">
+    <h4>诗人与目的地</h4>
+    <div class="legend-item"><div class="legend-color" style="background:#e74c3c;"></div><span>李白（2处起点）</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#3498db;"></div><span>岳飞</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#27ae60;"></div><span>崔颢</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#9b59b6;"></div><span>范成大</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#f39c12;"></div><span>陆游</span></div>
+    <div style="height:1px;background:rgba(255,255,255,0.15);margin:10px 0;"></div>
+    <div class="legend-item"><div class="legend-color" style="background:#ffd700;border:2px solid #ff6b6b;"></div><span>黄鹤楼（终点）</span></div>
+    <div class="legend-item"><div class="legend-line" style="background:linear-gradient(90deg,#ff6b6b,#ffd700);"></div><span>流动路径（箭头）</span></div>
+  </div>
+
+  <script>
+  require([
+    "geoscene/Map",
+    "geoscene/views/MapView",
+    "geoscene/Graphic",
+    "geoscene/layers/GraphicsLayer",
+    "geoscene/geometry/Point",
+    "geoscene/geometry/Polyline",
+    "geoscene/symbols/SimpleMarkerSymbol",
+    "geoscene/symbols/SimpleLineSymbol",
+    "geoscene/symbols/TextSymbol",
+    "geoscene/symbols/PictureMarkerSymbol",
+    "geoscene/Color"
+  ], function (
+    Map, MapView, Graphic, GraphicsLayer, Point, Polyline,
+    SimpleMarkerSymbol, SimpleLineSymbol, TextSymbol, PictureMarkerSymbol, Color
+  ) {
+    "use strict";
+
+    var poets = [
+      { name: "崔颢",   lng: 114.35, lat: 34.80, color: "#27ae60", poem: "昔人已乘黄鹤去，此地空余黄鹤楼" },
+      { name: "李白",   lng: 103.75, lat: 29.23, color: "#e74c3c", poem: "故人西辞黄鹤楼，烟花三月下扬州" },
+      { name: "李白",   lng: 113.68, lat: 31.26, color: "#e74c3c", poem: "黄鹤楼中吹玉笛，江城五月落梅花" },
+      { name: "陆游",   lng: 120.58, lat: 30.03, color: "#f39c12", poem: "苍龙阙角归何晚，黄鹤楼中醉不知" },
+      { name: "范成大", lng: 104.07, lat: 30.57, color: "#9b59b6", poem: "谁将玉笛传新曲，黄鹤楼前共月明" },
+      { name: "岳飞",   lng: 112.15, lat: 32.01, color: "#3498db", poem: "何日请缨提锐旅，一鞭直渡清河洛" }
+    ];
+    var hhl = { name: "黄鹤楼", lng: 114.296944, lat: 30.546944 };
+
+    var OFFICIAL_BM = {
+      "tianditu-vector": 1,
+      "tianditu-topography": 1,
+      "tianditu-image": 1,
+      "geoscene-blue": 1,
+      "geoscene-community": 1,
+      "geoscene-gray": 1,
+      "geoscene-warm": 1
+    };
+    var FALLBACK_BM = "tianditu-vector";
+
+    var map = new Map({ basemap: FALLBACK_BM });
+    var view = new MapView({
+      container: "viewDiv",
+      map: map,
+      center: [112, 31.5],
+      zoom: 5,
+      constraints: { minZoom: 4, maxZoom: 12 },
+      ui: { components: ["zoom", "compass"] }
+    });
+
+    var poetLayer = new GraphicsLayer({ title: "诗人点位" });
+    var lineLayer = new GraphicsLayer({ title: "路径线条" });
+    var flowLayer = new GraphicsLayer({ title: "流动箭头" });
+    var hhlLayer  = new GraphicsLayer({ title: "黄鹤楼" });
+
+    try {
+      map.add(lineLayer);
+      map.add(poetLayer);
+      map.add(flowLayer);
+      map.add(hhlLayer);
+    } catch (e1) {
+      try {
+        map.layers.add(lineLayer);
+        map.layers.add(poetLayer);
+        map.layers.add(flowLayer);
+        map.layers.add(hhlLayer);
+      } catch (e2) {}
+    }
+
+    function bezier(start, end, curv, seg) {
+      curv = curv || 0.25; seg = seg || 120;
+      var dx = end[0] - start[0], dy = end[1] - start[1];
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      var mx = (start[0] + end[0]) / 2, my = (start[1] + end[1]) / 2;
+      var nx = -dy / dist, ny = dx / dist;
+      var off = dist * curv;
+      var cx = mx + nx * off, cy = my + ny * off;
+      var pts = [], i, t;
+      for (i = 0; i <= seg; i++) {
+        t = i / seg;
+        pts.push([
+          (1 - t) * (1 - t) * start[0] + 2 * (1 - t) * t * cx + t * t * end[0],
+          (1 - t) * (1 - t) * start[1] + 2 * (1 - t) * t * cy + t * t * end[1]
+        ]);
+      }
+      return pts;
+    }
+    function lerpOn(pts, t) {
+      var n = pts.length - 1;
+      var ex = t * n;
+      var idx = Math.min(Math.floor(ex), n - 1);
+      var f = ex - idx;
+      var p0 = pts[idx], p1 = pts[idx + 1];
+      return [p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f];
+    }
+
+    var routes = [];
+
+    function initMap() {
+      poets.forEach(function (poet, idx) {
+        var pp = new Point({ longitude: poet.lng, latitude: poet.lat });
+        var psym = new SimpleMarkerSymbol({
+          color: poet.color, size: 12,
+          outline: { color: [255, 255, 255, 0.9], width: 2 }
+        });
+        var pAttr = { name: poet.name, poem: poet.poem };
+        var pPopup = {
+          title: "诗人：{name}",
+          content: "<b>出发地坐标：</b>[" + poet.lng + ", " + poet.lat +
+                   "]<br/><b>与黄鹤楼相关诗句：</b><br/><i>「{poem}」</i>"
+        };
+        poetLayer.add(new Graphic({ geometry: pp, symbol: psym, attributes: pAttr, popupTemplate: pPopup }));
+
+        poetLayer.add(new Graphic({
+          geometry: pp,
+          symbol: new TextSymbol({
+            text: poet.name, color: poet.color,
+            haloColor: "rgba(255,255,255,0.9)", haloSize: 1.5,
+            font: { size: 14, weight: "bold", family: "Microsoft YaHei" },
+            yoffset: 18
+          })
+        }));
+
+        var curve = bezier([poet.lng, poet.lat], [hhl.lng, hhl.lat], 0.18 + (idx % 3) * 0.06);
+        var lineC = new Color(poet.color); lineC.a = 0.35;
+        lineLayer.add(new Graphic({
+          geometry: new Polyline({ paths: [curve] }),
+          symbol: new SimpleLineSymbol({ color: lineC, width: 2, style: "dash" })
+        }));
+
+        routes.push({
+          poet: poet,
+          curve: curve,
+          head: null,
+          tails: [],
+          progress: Math.random() * 0.3,
+          speed: 0.0018 + Math.random() * 0.0012
+        });
+      });
+
+      var hp = new Point({ longitude: hhl.lng, latitude: hhl.lat });
+      var hSym = new SimpleMarkerSymbol({
+        color: "#ffd700", size: 22,
+        outline: { color: "#ff6b6b", width: 3.5 }
+      });
+      var hAttr = { name: "黄鹤楼", addr: "湖北省武汉市武昌区蛇山之巅" };
+      var hPopup = {
+        title: "黄鹤楼",
+        content: "<b>位置：</b>" + hAttr.addr +
+                 "<br/><b>经纬度：</b>[" + hhl.lng.toFixed(4) + ", " + hhl.lat.toFixed(4) + "]"
+      };
+      hhlLayer.add(new Graphic({ geometry: hp, symbol: hSym, attributes: hAttr, popupTemplate: hPopup }));
+
+      hhlLayer.add(new Graphic({
+        geometry: hp,
+        symbol: new TextSymbol({
+          text: "黄鹤楼", color: "#ffd700",
+          haloColor: "rgba(0,0,0,0.8)", haloSize: 2,
+          font: { size: 17, weight: "bold", family: "Microsoft YaHei" },
+          yoffset: 28
+        })
+      }));
+      hhlLayer.add(new Graphic({
+        geometry: hp,
+        symbol: new TextSymbol({
+          text: "★", color: "#ff6b6b", font: { size: 14 }, yoffset: 52
+        })
+      }));
+    }
+
+    var animHandle = null;
+    var isPlaying = false;
+
+    function arrowSvg(color) {
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">' +
+        '<defs><filter id="g"><feGaussianBlur stdDeviation="1.2"/></filter></defs>' +
+        '<polygon points="30,16 8,4 12,16 8,28" fill="' + color +
+        '" stroke="#fff" stroke-width="1.5" filter="url(#g)"/></svg>';
+    }
+
+    function updateFlow() {
+      var i, route, t, tailStart, segs, s, st, et, segA, segB, alpha, w, c;
+      var headPos, prevPos, angle, svg, sym;
+      for (i = 0; i < routes.length; i++) {
+        route = routes[i];
+        if (route.head) { try { flowLayer.remove(route.head); } catch (e) {} }
+        route.tails.forEach(function (g) { try { flowLayer.remove(g); } catch (e) {} });
+        route.tails = [];
+
+        t = route.progress;
+        tailStart = Math.max(0, t - 0.06);
+        if (t - tailStart > 0.001) {
+          segs = 14;
+          for (s = 0; s < segs; s++) {
+            st = tailStart + (t - tailStart) * (s / segs);
+            et = tailStart + (t - tailStart) * ((s + 1) / segs);
+            segA = lerpOn(route.curve, st);
+            segB = lerpOn(route.curve, et);
+            alpha = 0.15 + (s / segs) * 0.75;
+            w = 1.5 + (s / segs) * 4.5;
+            c = new Color(route.poet.color);
+            c.a = alpha;
+            route.tails.push(new Graphic({
+              geometry: new Polyline({ paths: [[segA, segB]] }),
+              symbol: new SimpleLineSymbol({ color: c, width: w })
+            }));
+          }
+          route.tails.forEach(function (g) { flowLayer.add(g); });
+        }
+
+        headPos = lerpOn(route.curve, t);
+        prevPos = lerpOn(route.curve, Math.max(0, t - 0.004));
+        angle = Math.atan2(headPos[1] - prevPos[1], headPos[0] - prevPos[0]) * 180 / Math.PI;
+        svg = arrowSvg(route.poet.color);
+        try {
+          sym = new PictureMarkerSymbol({
+            url: "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg))),
+            width: "30px", height: "30px", angle: -angle
+          });
+        } catch (e) {
+          sym = new SimpleMarkerSymbol({
+            color: route.poet.color, size: 12,
+            outline: { color: "#fff", width: 1.5 }
+          });
+        }
+        route.head = new Graphic({
+          geometry: new Point({ longitude: headPos[0], latitude: headPos[1] }),
+          symbol: sym
+        });
+        flowLayer.add(route.head);
+
+        route.progress += route.speed;
+        if (route.progress > 1) route.progress = 0;
+      }
+    }
+    function startAnim() {
+      if (isPlaying) return;
+      isPlaying = true;
+      try { document.getElementById("btnPlay").classList.add("active"); } catch (e) {}
+      try { document.getElementById("btnPause").classList.remove("active"); } catch (e) {}
+      (function tick() { updateFlow(); animHandle = requestAnimationFrame(tick); })();
+    }
+    function pauseAnim() {
+      isPlaying = false;
+      try { document.getElementById("btnPause").classList.add("active"); } catch (e) {}
+      try { document.getElementById("btnPlay").classList.remove("active"); } catch (e) {}
+      if (animHandle) { try { cancelAnimationFrame(animHandle); } catch (e) {} animHandle = null; }
+    }
+    function resetAnim() {
+      pauseAnim();
+      routes.forEach(function (r) { r.progress = Math.random() * 0.3; });
+      try { flowLayer.removeAll(); } catch (e) {}
+    }
+
+    function switchBM(id, btn) {
+      try {
+        document.querySelectorAll(".basemap-btn").forEach(function (b) { b.classList.remove("active"); });
+      } catch (e) {}
+      if (btn) { try { btn.classList.add("active"); } catch (e) {} }
+      if (id === "transparent") {
+        try { map.basemap = null; } catch (e) {}
+        try { document.body.classList.add("transparent-mode"); } catch (e) {}
+        try {
+          var surf = document.querySelector(".esri-view-surface");
+          if (surf) surf.style.background = "transparent";
+        } catch (e) {}
+        return;
+      }
+      try { document.body.classList.remove("transparent-mode"); } catch (e) {}
+      try {
+        var surf = document.querySelector(".esri-view-surface");
+        if (surf) surf.style.background = "";
+      } catch (e) {}
+      if (!OFFICIAL_BM[id]) id = FALLBACK_BM;
+      try { map.basemap = id; } catch (e) {
+        try { map.basemap = FALLBACK_BM; } catch (e2) {}
+      }
+    }
+
+    view.when(function () {
+      initMap();
+      setTimeout(startAnim, 500);
+      try {
+        document.getElementById("btnPlay").onclick  = startAnim;
+        document.getElementById("btnPause").onclick = pauseAnim;
+        document.getElementById("btnReset").onclick = resetAnim;
+        document.querySelectorAll(".basemap-btn").forEach(function (btn) {
+          btn.onclick = function () { switchBM(btn.getAttribute("data-bm"), btn); };
+        });
+      } catch (e) {}
+    });
+  });
+  </script>
 </body>
 </html>
