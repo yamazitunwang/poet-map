@@ -1,389 +1,552 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>唐宋诗人旅行路线 · 指向塔</title>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js">
-    </script>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>古代诗人前往黄鹤楼 - 流动箭头动画</title>
+    <link
+      rel="stylesheet"
+      href="https://js.geoscene.cn/4.28/geoscene/themes/dark/main.css"
+    />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            background: #0b1a2f;
-            overflow: hidden;
-            font-family: 'Segoe UI', 'PingFang SC', sans-serif;
-        }
-        #chart {
-            width: 100vw;
-            height: 100vh;
-            min-height: 500px;
-        }
-        .legend {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: #e0e8f0;
-            background: rgba(6, 14, 24, 0.8);
-            backdrop-filter: blur(6px);
-            padding: 14px 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            font-size: 13px;
-            line-height: 1.9;
-            pointer-events: none;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-            z-index: 10;
-            max-width: 160px;
-        }
-        .legend .dot {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-            vertical-align: middle;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-        .legend .dot.tower {
-            background: #1a1a1a;
-            border: 2px solid #ffd966;
-            box-shadow: 0 0 16px #ffd96666;
-            width: 14px;
-            height: 14px;
-        }
-        .legend .row {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .legend-title {
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: #ffd966;
-            font-size: 14px;
-            letter-spacing: 0.5px;
-        }
-        .footer {
-            position: absolute;
-            bottom: 16px;
-            left: 20px;
-            color: rgba(255, 255, 255, 0.2);
-            font-size: 12px;
-            letter-spacing: 1px;
-            font-weight: 300;
-            z-index: 10;
-        }
-        .main-title {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #ffd966;
-            font-size: 22px;
-            font-weight: 600;
-            letter-spacing: 3px;
-            text-shadow: 0 0 30px rgba(255, 217, 102, 0.15);
-            z-index: 10;
-            background: rgba(6, 14, 24, 0.6);
-            padding: 8px 28px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 217, 102, 0.1);
-            backdrop-filter: blur(4px);
-        }
-        .main-title span {
-            font-size: 14px;
-            color: #8899aa;
-            font-weight: 300;
-            margin-left: 10px;
-        }
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+      #title-panel {
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 99;
+        background: rgba(20, 30, 48, 0.85);
+        color: #ffd700;
+        padding: 12px 30px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 215, 0, 0.4);
+        font-size: 18px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        pointer-events: none;
+      }
+      #legend-panel {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        z-index: 99;
+        background: rgba(20, 30, 48, 0.85);
+        color: #fff;
+        padding: 15px 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 13px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        max-width: 260px;
+      }
+      #legend-panel h4 {
+        margin: 0 0 10px 0;
+        color: #ffd700;
+        font-size: 15px;
+        border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+        padding-bottom: 6px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        margin: 6px 0;
+      }
+      .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        margin-right: 10px;
+        flex-shrink: 0;
+      }
+      .legend-line {
+        width: 30px;
+        height: 3px;
+        margin-right: 10px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+      #control-panel {
+        position: absolute;
+        top: 70px;
+        right: 20px;
+        z-index: 99;
+        background: rgba(20, 30, 48, 0.85);
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 13px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+      #control-panel button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        margin: 4px;
+        transition: all 0.3s;
+      }
+      #control-panel button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+      #control-panel button.active {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      }
     </style>
-</head>
-<body>
-
-    <div id="chart"></div>
-
-    <div class="main-title">
-        🏮 唐宋诗人旅行路线
-        <span>· 汇聚黄鹤楼</span>
+    <script src="https://js.geoscene.cn/4.28/"></script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <div id="title-panel">🏯 古代诗人赴黄鹤楼之旅 🏯</div>
+    <div id="control-panel">
+      <div style="margin-bottom: 8px; color: #ffd700; font-weight: bold">
+        动画控制
+      </div>
+      <button id="btnPlay" class="active">▶ 播放动画</button>
+      <button id="btnPause">⏸ 暂停</button>
+      <button id="btnReset">↺ 重置</button>
     </div>
-
-    <div class="legend">
-        <div class="legend-title">✦ 诗人路径</div>
-        <div class="row"><span class="dot" style="background:#f94144;"></span> 李白</div>
-        <div class="row"><span class="dot" style="background:#f9c74f;"></span> 岳飞</div>
-        <div class="row"><span class="dot" style="background:#4d908e;"></span> 崔颢</div>
-        <div class="row"><span class="dot" style="background:#577590;"></span> 范成大</div>
-        <div class="row"><span class="dot" style="background:#9b5de5;"></span> 陆游</div>
-        <div class="row" style="margin-top:6px; border-top:1px solid #ffffff22; padding-top:6px;">
-            <span class="dot tower"></span> 黄鹤楼 🗼
-        </div>
+    <div id="legend-panel">
+      <h4>📜 诗人与目的地</h4>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #e74c3c"></div>
+        <span>李白（2处起点）</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #3498db"></div>
+        <span>岳飞</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #27ae60"></div>
+        <span>崔颢</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #9b59b6"></div>
+        <span>范成大</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #f39c12"></div>
+        <span>陆游</span>
+      </div>
+      <div
+        style="
+          height: 1px;
+          background: rgba(255, 255, 255, 0.15);
+          margin: 10px 0;
+        "
+      ></div>
+      <div class="legend-item">
+        <div
+          class="legend-color"
+          style="background: #ffd700; border: 2px solid #ff6b6b"
+        ></div>
+        <span>黄鹤楼（终点）</span>
+      </div>
+      <div class="legend-item">
+        <div
+          class="legend-line"
+          style="background: linear-gradient(90deg, #ff6b6b, #ffd700)"
+        ></div>
+        <span>流动路径（箭头指向）</span>
+      </div>
     </div>
-
-    <div class="footer">数据来源 · 唐宋诗人行迹 · 坐标：114.296944, 30.546944</div>
 
     <script>
-        // ============================================================
-        // 使用 fetch 动态加载中国地图 GeoJSON
-        // ============================================================
-        async function loadChinaMap() {
-            try {
-                // 从多个可靠源尝试加载地图数据
-                const urls = [
-                    'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
-                    'https://cdn.jsdelivr.net/npm/echarts@5.4.3/map/json/china.json',
-                ];
+      require([
+        "geoscene/Map",
+        "geoscene/views/MapView",
+        "geoscene/Graphic",
+        "geoscene/layers/GraphicsLayer",
+        "geoscene/geometry/Point",
+        "geoscene/geometry/Polyline",
+        "geoscene/symbols/SimpleMarkerSymbol",
+        "geoscene/symbols/SimpleLineSymbol",
+        "geoscene/symbols/TextSymbol",
+        "geoscene/symbols/PictureMarkerSymbol",
+        "geoscene/Color",
+        "geoscene/geometry/support/geodesicUtils",
+        "geoscene/geometry/support/spatialReferenceUtils",
+      ], function (
+        Map,
+        MapView,
+        Graphic,
+        GraphicsLayer,
+        Point,
+        Polyline,
+        SimpleMarkerSymbol,
+        SimpleLineSymbol,
+        TextSymbol,
+        PictureMarkerSymbol,
+        Color,
+        geodesicUtils,
+        spatialReferenceUtils,
+      ) {
+        const poets = [
+          {
+            name: "崔颢",
+            lng: 114.35,
+            lat: 34.8,
+            color: "#27ae60",
+            poem: "昔人已乘黄鹤去，此地空余黄鹤楼",
+          },
+          {
+            name: "李白",
+            lng: 103.75,
+            lat: 29.23,
+            color: "#e74c3c",
+            poem: "故人西辞黄鹤楼，烟花三月下扬州",
+          },
+          {
+            name: "李白",
+            lng: 113.68,
+            lat: 31.26,
+            color: "#e74c3c",
+            poem: "黄鹤楼中吹玉笛，江城五月落梅花",
+          },
+          {
+            name: "陆游",
+            lng: 120.58,
+            lat: 30.03,
+            color: "#f39c12",
+            poem: "苍龙阙角归何晚，黄鹤楼中醉不知",
+          },
+          {
+            name: "范成大",
+            lng: 104.07,
+            lat: 30.57,
+            color: "#9b59b6",
+            poem: "谁将玉笛传新曲，黄鹤楼前共月明",
+          },
+          {
+            name: "岳飞",
+            lng: 112.15,
+            lat: 32.01,
+            color: "#3498db",
+            poem: "何日请缨提锐旅，一鞭直渡清河洛",
+          },
+        ];
 
-                let geoData = null;
-                for (const url of urls) {
-                    try {
-                        const response = await fetch(url);
-                        if (response.ok) {
-                            geoData = await response.json();
-                            console.log('✅ 地图数据加载成功:', url);
-                            break;
-                        }
-                    } catch (e) {
-                        console.warn('⚠️ 从', url, '加载失败，尝试下一个...');
-                    }
-                }
+        const hhl = { name: "黄鹤楼", lng: 114.296944, lat: 30.546944 };
 
-                if (!geoData) {
-                    console.error('❌ 所有地图数据源加载失败');
-                    return;
-                }
+        const map = new Map({
+          basemap: "gray-vector",
+        });
 
-                // 注册地图
-                echarts.registerMap('china', geoData);
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [112, 31.5],
+          zoom: 5,
+          constraints: {
+            minZoom: 4,
+            maxZoom: 12,
+          },
+          ui: {
+            components: ["zoom", "compass"],
+          },
+        });
 
-                // 初始化图表
-                initChart();
+        const poetLayer = new GraphicsLayer({ title: "诗人点位" });
+        const lineLayer = new GraphicsLayer({ title: "路径线条" });
+        const flowLayer = new GraphicsLayer({ title: "流动箭头" });
+        const hhlLayer = new GraphicsLayer({ title: "黄鹤楼" });
 
-            } catch (error) {
-                console.error('❌ 加载地图出错:', error);
-            }
+        map.addMany([lineLayer, poetLayer, flowLayer, hhlLayer]);
+
+        function createBezierCurve(
+          start,
+          end,
+          curvature = 0.25,
+          segments = 120,
+        ) {
+          const dx = end[0] - start[0];
+          const dy = end[1] - start[1];
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const mx = (start[0] + end[0]) / 2;
+          const my = (start[1] + end[1]) / 2;
+          const nx = -dy / dist;
+          const ny = dx / dist;
+          const offset = dist * curvature;
+          const cx = mx + nx * offset;
+          const cy = my + ny * offset;
+          const pts = [];
+          for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const x =
+              (1 - t) * (1 - t) * start[0] +
+              2 * (1 - t) * t * cx +
+              t * t * end[0];
+            const y =
+              (1 - t) * (1 - t) * start[1] +
+              2 * (1 - t) * t * cy +
+              t * t * end[1];
+            pts.push([x, y]);
+          }
+          return pts;
         }
 
-        function initChart() {
-            const chartDom = document.getElementById('chart');
-            const myChart = echarts.init(chartDom, 'dark');
-
-            // 诗人数据
-            const poets = [
-                { name: '李白', color: '#f94144', coord: [114.35, 34.80] },
-                { name: '岳飞', color: '#f9c74f', coord: [112.15, 32.01] },
-                { name: '崔颢', color: '#4d908e', coord: [114.50, 34.60] },
-                { name: '范成大', color: '#577590', coord: [120.58, 30.03] },
-                { name: '陆游', color: '#9b5de5', coord: [120.78, 29.83] }
-            ];
-
-            const towerCoord = [114.296944, 30.546944];
-
-            // 节点
-            const nodes = [
-                {
-                    name: '黄鹤楼',
-                    symbolSize: 42,
-                    itemStyle: {
-                        color: '#1a1a1a',
-                        borderColor: '#ffd966',
-                        borderWidth: 3,
-                        shadowBlur: 28,
-                        shadowColor: '#ffd966aa',
-                    },
-                    label: {
-                        show: true,
-                        formatter: '🏯',
-                        fontSize: 34,
-                        color: '#ffd966',
-                        position: 'inside',
-                        fontWeight: 'bold',
-                    },
-                    coord: towerCoord,
-                },
-                ...poets.map(p => ({
-                    name: p.name,
-                    symbolSize: 30,
-                    itemStyle: {
-                        color: p.color,
-                        shadowBlur: 16,
-                        shadowColor: p.color + '66',
-                        borderColor: p.color,
-                        borderWidth: 2,
-                    },
-                    label: {
-                        show: true,
-                        formatter: p.name,
-                        position: 'bottom',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: '#e8edf3',
-                        textShadowBlur: 8,
-                        textShadowColor: '#000000cc',
-                        distance: 12,
-                    },
-                    coord: p.coord,
-                })),
-            ];
-
-            // 连线
-            const edges = poets.map(p => ({
-                source: p.name,
-                target: '黄鹤楼',
-                lineStyle: {
-                    color: p.color,
-                    width: 2.5,
-                    curveness: 0.2,
-                    opacity: 0.75,
-                    shadowBlur: 10,
-                    shadowColor: p.color + '55',
-                },
-                edgeSymbol: ['none', 'arrow'],
-                edgeSymbolSize: [0, 16],
-            }));
-
-            // 配置
-            const option = {
-                geo: {
-                    map: 'china',
-                    roam: true,
-                    zoom: 1.1,
-                    center: [112, 33],
-                    itemStyle: {
-                        areaColor: {
-                            type: 'linear',
-                            x: 0,
-                            y: 0,
-                            x2: 0,
-                            y2: 1,
-                            colorStops: [
-                                { offset: 0, color: '#0f2840' },
-                                { offset: 1, color: '#06121e' },
-                            ],
-                        },
-                        borderColor: '#2a4a6a',
-                        borderWidth: 1.2,
-                    },
-                    emphasis: {
-                        itemStyle: { areaColor: '#1a405a' },
-                        label: { show: false },
-                    },
-                    label: { show: false },
-                },
-
-                tooltip: {
-                    trigger: 'item',
-                    formatter: (params) => {
-                        if (params.dataType === 'node') {
-                            const coord = params.data.coord;
-                            const isTower = params.name === '黄鹤楼';
-                            return `
-                                <strong style="font-size:16px;color:${isTower ? '#ffd966' : '#ffaa66'};">${params.name}</strong>
-                                <br/>📍 经度：${coord?.[0]?.toFixed(6) || '--'}
-                                <br/>📍 纬度：${coord?.[1]?.toFixed(6) || '--'}
-                                <br/>🏷️ ${isTower ? '🗼 目标塔 · 黄鹤楼' : '📜 诗人节点'}
-                            `;
-                        }
-                        return `
-                            <strong>${params.data.source}</strong> 
-                            <span style="color:#ffaa66;">→</span> 
-                            <strong>${params.data.target}</strong>
-                        `;
-                    },
-                    backgroundColor: 'rgba(10,20,35,0.9)',
-                    borderColor: '#ffd96644',
-                    borderWidth: 1,
-                    textStyle: { color: '#d0dcec', fontSize: 13 },
-                    extraCssText: 'border-radius:8px;padding:12px 16px;',
-                },
-
-                series: [{
-                    type: 'graph',
-                    coordinateSystem: 'geo',
-                    layout: 'none',
-                    data: nodes,
-                    edges: edges,
-                    roam: true,
-                    draggable: true,
-                    lineStyle: {
-                        color: 'source',
-                        width: 2,
-                        curveness: 0.2,
-                        opacity: 0.6,
-                    },
-                    edgeSymbol: ['none', 'arrow'],
-                    edgeSymbolSize: [0, 12],
-                    emphasis: {
-                        focus: 'adjacency',
-                        lineStyle: {
-                            width: 5,
-                            opacity: 1,
-                            shadowBlur: 20,
-                            shadowColor: '#ffffff44',
-                        },
-                        itemStyle: {
-                            shadowBlur: 30,
-                            shadowColor: '#ffffff88',
-                        },
-                    },
-                    animationDuration: 1500,
-                    animationEasing: 'cubicOut',
-                }],
-            };
-
-            myChart.setOption(option);
-
-            // ===== 流动脉冲动画 =====
-            let phase = 0;
-
-            function pulseEdges() {
-                phase += 0.06;
-                const pulse = 0.4 + 0.6 * Math.sin(phase);
-
-                try {
-                    const opt = myChart.getOption();
-                    if (!opt || !opt.series || !opt.series[0]) return;
-                    const edgesNow = opt.series[0].edges;
-                    if (!edgesNow || edgesNow.length === 0) return;
-
-                    const updatedEdges = edgesNow.map((edge) => ({
-                        ...edge,
-                        lineStyle: {
-                            ...edge.lineStyle,
-                            width: 1.8 + 2.2 * pulse,
-                            opacity: 0.4 + 0.6 * pulse,
-                            shadowBlur: 8 * pulse,
-                        },
-                        edgeSymbolSize: [0, 8 + 10 * pulse],
-                    }));
-
-                    myChart.setOption({
-                        series: [{ edges: updatedEdges }]
-                    });
-                } catch (e) {}
-            }
-
-            const pulseInterval = setInterval(pulseEdges, 80);
-
-            // 自适应
-            window.addEventListener('resize', () => {
-                myChart.resize();
-            });
-
-            // 清理
-            window.addEventListener('beforeunload', () => {
-                clearInterval(pulseInterval);
-            });
-
-            console.log('✅ 唐宋诗人路线图 · 已启动');
-            console.log('🗼 黄鹤楼坐标：', towerCoord);
+        function interpolateOnCurve(points, t) {
+          const n = points.length - 1;
+          const exact = t * n;
+          const idx = Math.min(Math.floor(exact), n - 1);
+          const frac = exact - idx;
+          const p0 = points[idx];
+          const p1 = points[idx + 1];
+          return [
+            p0[0] + (p1[0] - p0[0]) * frac,
+            p0[1] + (p1[1] - p0[1]) * frac,
+          ];
         }
 
-        // ===== 启动 =====
-        loadChinaMap();
+        const routes = [];
+
+        function initMap() {
+          poets.forEach((poet, idx) => {
+            const poetPoint = new Point({
+              longitude: poet.lng,
+              latitude: poet.lat,
+            });
+            const poetSymbol = new SimpleMarkerSymbol({
+              color: poet.color,
+              size: 12,
+              outline: { color: [255, 255, 255, 0.9], width: 2 },
+            });
+            const poetAttr = { name: poet.name, poem: poet.poem };
+            const poetGraphic = new Graphic({
+              geometry: poetPoint,
+              symbol: poetSymbol,
+              attributes: poetAttr,
+              popupTemplate: {
+                title: "诗人：{name}",
+                content:
+                  "<b>出发地坐标：</b>[" +
+                  poet.lng +
+                  ", " +
+                  poet.lat +
+                  "]<br><b>与黄鹤楼相关诗句：</b><br><i>「{poem}」</i>",
+              },
+            });
+            poetLayer.add(poetGraphic);
+
+            const labelSymbol = new TextSymbol({
+              text: poet.name,
+              color: poet.color,
+              haloColor: "rgba(255,255,255,0.9)",
+              haloSize: 1.5,
+              font: { size: 14, weight: "bold", family: "Microsoft YaHei" },
+              yoffset: 18,
+            });
+            poetLayer.add(
+              new Graphic({ geometry: poetPoint, symbol: labelSymbol }),
+            );
+
+            const curvePoints = createBezierCurve(
+              [poet.lng, poet.lat],
+              [hhl.lng, hhl.lat],
+              0.18 + (idx % 3) * 0.06,
+            );
+            const lineColor = new Color(poet.color);
+            lineColor.a = 0.35;
+            const baseLine = new Polyline({ paths: [curvePoints] });
+            const baseSymbol = new SimpleLineSymbol({
+              color: lineColor,
+              width: 2,
+              style: "dash",
+            });
+            lineLayer.add(
+              new Graphic({ geometry: baseLine, symbol: baseSymbol }),
+            );
+
+            const brightColor = new Color(poet.color);
+            brightColor.a = 0.9;
+            const headSymbol = new SimpleLineSymbol({
+              color: brightColor,
+              width: 4,
+            });
+
+            routes.push({
+              poet: poet,
+              curvePoints: curvePoints,
+              headGraphic: null,
+              headSymbol: headSymbol,
+              tailGraphics: [],
+              progress: Math.random() * 0.3,
+              speed: 0.0018 + Math.random() * 0.0012,
+            });
+          });
+
+          const hhlPoint = new Point({ longitude: hhl.lng, latitude: hhl.lat });
+          const hhlSymbol = new SimpleMarkerSymbol({
+            color: "#ffd700",
+            size: 22,
+            outline: { color: "#ff6b6b", width: 3.5 },
+          });
+          const hhlGraphic = new Graphic({
+            geometry: hhlPoint,
+            symbol: hhlSymbol,
+            attributes: { name: "黄鹤楼", addr: "湖北省武汉市武昌区蛇山之巅" },
+            popupTemplate: {
+              title: "🏯 {name}",
+              content:
+                "<b>位置：</b>{addr}<br><b>经纬度：</b>[" +
+                hhl.lng.toFixed(4) +
+                ", " +
+                hhl.lat.toFixed(4) +
+                "]<br><br><b>历代诗人在此留下无数千古名篇</b>",
+            },
+          });
+          hhlLayer.add(hhlGraphic);
+
+          const hhlLabel = new TextSymbol({
+            text: "黄鹤楼",
+            color: "#ffd700",
+            haloColor: "rgba(0,0,0,0.8)",
+            haloSize: 2,
+            font: { size: 17, weight: "bold", family: "Microsoft YaHei" },
+            yoffset: 28,
+          });
+          hhlLayer.add(new Graphic({ geometry: hhlPoint, symbol: hhlLabel }));
+
+          const starSymbol = new TextSymbol({
+            text: "★",
+            color: "#ff6b6b",
+            font: { size: 14 },
+            yoffset: 52,
+          });
+          hhlLayer.add(new Graphic({ geometry: hhlPoint, symbol: starSymbol }));
+        }
+
+        let animHandle = null;
+        let isPlaying = false;
+
+        function updateFlow() {
+          routes.forEach((route) => {
+            if (route.headGraphic) {
+              flowLayer.remove(route.headGraphic);
+            }
+            route.tailGraphics.forEach((g) => flowLayer.remove(g));
+            route.tailGraphics = [];
+
+            const t = route.progress;
+            const tailLen = 0.06;
+            const tailStart = Math.max(0, t - tailLen);
+
+            if (t - tailStart > 0.001) {
+              const segs = 14;
+              for (let s = 0; s < segs; s++) {
+                const st = tailStart + (t - tailStart) * (s / segs);
+                const et = tailStart + (t - tailStart) * ((s + 1) / segs);
+                const segStart = interpolateOnCurve(route.curvePoints, st);
+                const segEnd = interpolateOnCurve(route.curvePoints, et);
+                const alpha = 0.15 + (s / segs) * 0.75;
+                const w = 1.5 + (s / segs) * 4.5;
+                const c = new Color(route.poet.color);
+                c.a = alpha;
+                route.tailGraphics.push(
+                  new Graphic({
+                    geometry: new Polyline({ paths: [[segStart, segEnd]] }),
+                    symbol: new SimpleLineSymbol({ color: c, width: w }),
+                  }),
+                );
+              }
+              route.tailGraphics.forEach((g) => flowLayer.add(g));
+            }
+
+            const headPos = interpolateOnCurve(route.curvePoints, t);
+            const prevPos = interpolateOnCurve(
+              route.curvePoints,
+              Math.max(0, t - 0.004),
+            );
+            const angle =
+              (Math.atan2(headPos[1] - prevPos[1], headPos[0] - prevPos[0]) *
+                180) /
+              Math.PI;
+
+            const arrowSvg =
+              '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">' +
+              '<defs><filter id="glow"><feGaussianBlur stdDeviation="1.5" result="c"/><feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>' +
+              '<polygon points="30,16 8,4 12,16 8,28" fill="' +
+              route.poet.color +
+              '" stroke="white" stroke-width="1.5" filter="url(#glow)"/>' +
+              "</svg>";
+            const arrowSymbol = new PictureMarkerSymbol({
+              url:
+                "data:image/svg+xml;base64," +
+                btoa(unescape(encodeURIComponent(arrowSvg))),
+              width: "30px",
+              height: "30px",
+              angle: -angle,
+            });
+            route.headGraphic = new Graphic({
+              geometry: new Point({
+                longitude: headPos[0],
+                latitude: headPos[1],
+              }),
+              symbol: arrowSymbol,
+            });
+            flowLayer.add(route.headGraphic);
+
+            route.progress += route.speed;
+            if (route.progress > 1) {
+              route.progress = 0;
+            }
+          });
+        }
+
+        function startAnim() {
+          if (isPlaying) return;
+          isPlaying = true;
+          document.getElementById("btnPlay").classList.add("active");
+          document.getElementById("btnPause").classList.remove("active");
+          function tick() {
+            updateFlow();
+            animHandle = requestAnimationFrame(tick);
+          }
+          tick();
+        }
+
+        function pauseAnim() {
+          isPlaying = false;
+          document.getElementById("btnPause").classList.add("active");
+          document.getElementById("btnPlay").classList.remove("active");
+          if (animHandle) {
+            cancelAnimationFrame(animHandle);
+            animHandle = null;
+          }
+        }
+
+        function resetAnim() {
+          pauseAnim();
+          routes.forEach((r) => (r.progress = Math.random() * 0.3));
+          flowLayer.removeAll();
+        }
+
+        view.when(function () {
+          initMap();
+          setTimeout(startAnim, 600);
+
+          document.getElementById("btnPlay").onclick = startAnim;
+          document.getElementById("btnPause").onclick = pauseAnim;
+          document.getElementById("btnReset").onclick = resetAnim;
+        });
+      });
     </script>
-
-</body>
+  </body>
 </html>
