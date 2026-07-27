@@ -179,7 +179,6 @@ body.transparent-mode .esri-view-surface { background: transparent !important; }
 <div id="basemap-panel">
 <h4>🗺 底图切换</h4>
 <div class="basemap-grid">
-<button class="basemap-btn active" data-basemap="streets-vector" title="彩色街道图（中文注记）">
 <button class="basemap-btn active" data-basemap="streets-vector" title="彩色街道图（中文注记）✅推荐">
 <div class="bm-preview bm-streets"></div><div class="bm-label">街道图</div>
 </button>
@@ -262,7 +261,6 @@ require([
 "geoscene/geometry/support/geodesicUtils",
 "geoscene/geometry/support/spatialReferenceUtils"
 ], function(
-Map, MapView, Graphic, GraphicsLayer, Point, Polyline,
 Map, MapView, Graphic, GraphicsLayer, WebTileLayer, Basemap, Point, Polyline,
 SimpleMarkerSymbol, SimpleLineSymbol, TextSymbol, PictureMarkerSymbol,
 Color, geodesicUtils, spatialReferenceUtils
@@ -281,6 +279,20 @@ const hhl = { name: "黄鹤楼", lng: 114.296944, lat: 30.546944 };
  
 const map = new Map({
 basemap: "streets-vector"
+basemap: (function() {
+try {
+var cdn = "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png";
+var subs = ["a","b","c"];
+var tileLyr = new WebTileLayer({
+urlTemplate: cdn,
+subDomains: subs,
+copyright: "© OpenStreetMap contributors"
+});
+return new Basemap({ baseLayers: [tileLyr] });
+} catch(e) {
+return "gray-vector";
+}
+})()
 });
  
 const view = new MapView({
@@ -303,6 +315,14 @@ const flowLayer = new GraphicsLayer({ title: "流动箭头" });
 const hhlLayer  = new GraphicsLayer({ title: "黄鹤楼" });
  
 map.addMany([lineLayer, poetLayer, flowLayer, hhlLayer]);
+try {
+map.layers.addMany([lineLayer, poetLayer, flowLayer, hhlLayer]);
+} catch(e) {
+map.add(lineLayer);
+map.add(poetLayer);
+map.add(flowLayer);
+map.add(hhlLayer);
+}
  
 function createBezierCurve(start, end, curvature = 0.25, segments = 120) {
 const dx = end[0] - start[0];
@@ -546,10 +566,64 @@ subDomains: subs,
 copyright: "© OpenStreetMap / CARTO"
 });
 return new Basemap({ baseLayers: [tileLyr] });
+function makeTileBasemap(config) {
+try {
+var layer = new WebTileLayer({
+urlTemplate: config.url,
+subDomains: config.subs || ["a","b","c"],
+copyright: config.copy || ""
+});
+var extras = (config.overlays || []).map(function(ocfg){
+return new WebTileLayer({
+urlTemplate: ocfg.url,
+subDomains: ocfg.subs || ["a","b","c","d"],
+copyright: ocfg.copy || ""
+});
+});
+return new Basemap({ baseLayers: [layer].concat(extras) });
+} catch(e) {
+return null;
+}
 }
  
+var TILE_PRESETS = {
+"streets-vector": {
+url: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png",
+subs: ["a","b","c"],
+copy: "© OpenStreetMap contributors"
+},
+"topo-vector": {
+url: "https://{subDomain}.tile.opentopomap.org/{level}/{col}/{row}.png",
+subs: ["a","b","c"],
+copy: "© OpenTopoMap (CC-BY-SA)"
+},
+"satellite": {
+url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{level}/{row}/{col}",
+subs: [],
+copy: "© Esri World Imagery"
+},
+"hybrid": {
+url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{level}/{row}/{col}",
+subs: [],
+copy: "© Esri World Imagery + CARTO Labels",
+overlays: [{
+url: "https://{subDomain}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{level}/{col}/{row}{@2x}.png",
+subs: ["a","b","c","d"]
+}]
+},
+"dark-gray-vector": {
+url: "https://{subDomain}.basemaps.cartocdn.com/dark_all/{level}/{col}/{row}{@2x}.png",
+subs: ["a","b","c","d"],
+copy: "© CARTO Dark Matter"
+},
+"gray-vector": {
+url: "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}{@2x}.png",
+subs: ["a","b","c","d"],
+copy: "© CARTO Voyager Light"
+}
+};
+ 
 function switchBasemap(basemapId, btnEl) {
-map.basemap = basemapId;
 document.querySelectorAll(".basemap-btn").forEach(b => b.classList.remove("active"));
 if (btnEl) btnEl.classList.add("active");
 if (basemapId === "transparent") {
@@ -557,6 +631,10 @@ try { map.basemap = null; } catch(e){}
 try { document.body.classList.add("transparent-mode"); } catch(e){}
 const surface = document.querySelector(".esri-view-surface");
 if (surface) surface.style.background = "transparent";
+try {
+var s = document.querySelector(".esri-view-surface");
+if (s) s.style.background = "transparent";
+} catch(e){}
 return;
 }
 try { document.body.classList.remove("transparent-mode"); } catch(e){}
@@ -580,9 +658,21 @@ map.basemap = buildFallbackBasemap("light");
 });
 } else {
 map.basemap = basemapId;
+var s = document.querySelector(".esri-view-surface");
+if (s) s.style.background = "";
+} catch(e){}
+try {
+var cfg = TILE_PRESETS[basemapId];
+if (cfg) {
+var bm = makeTileBasemap(cfg);
+if (bm) { map.basemap = bm; return; }
 }
+map.basemap = "gray-vector";
 } catch(err) {
 map.basemap = buildFallbackBasemap("streets");
+try {
+map.basemap = makeTileBasemap(TILE_PRESETS["streets-vector"]);
+} catch(e){}
 }
 }
  
