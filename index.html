@@ -178,24 +178,37 @@ body.transparent-mode .esri-view-surface { background: transparent !important; }
 <div id="title-panel">🏯 古代诗人赴黄鹤楼之旅 🏯</div>
 <div id="basemap-panel">
 <h4>🗺 底图切换</h4>
+<h4>🗺 底图切换（天地图·国内可用）</h4>
 <div class="basemap-grid">
 <button class="basemap-btn active" data-basemap="streets-vector" title="彩色街道图（中文注记）✅推荐">
 <div class="bm-preview bm-streets"></div><div class="bm-label">街道图</div>
+<button class="basemap-btn active" data-basemap="tianditu-vector" title="✅推荐：天地图矢量街道（完整中文注记）">
+<div class="bm-preview bm-streets"></div><div class="bm-label">天地图·街道</div>
 </button>
 <button class="basemap-btn" data-basemap="topo-vector" title="地形晕渲图">
 <div class="bm-preview bm-topo"></div><div class="bm-label">地形图</div>
+<button class="basemap-btn" data-basemap="tianditu-topography" title="天地图地形图（带晕渲）">
+<div class="bm-preview bm-topo"></div><div class="bm-label">天地图·地形</div>
 </button>
 <button class="basemap-btn" data-basemap="satellite" title="高清卫星影像">
 <div class="bm-preview bm-sat"></div><div class="bm-label">卫星图</div>
+<button class="basemap-btn" data-basemap="tianditu-image" title="天地图高清卫星影像（带注记）">
+<div class="bm-preview bm-sat"></div><div class="bm-label">天地图·影像</div>
 </button>
 <button class="basemap-btn" data-basemap="hybrid" title="卫星影像+注记">
 <div class="bm-preview bm-hybrid"></div><div class="bm-label">影像+注记</div>
+<button class="basemap-btn" data-basemap="geoscene-community" title="GeoScene 社区版街道图">
+<div class="bm-preview bm-hybrid"></div><div class="bm-label">社区街道</div>
 </button>
 <button class="basemap-btn" data-basemap="dark-gray-vector" title="暗色简约风格">
 <div class="bm-preview bm-dark"></div><div class="bm-label">暗色底图</div>
+<button class="basemap-btn" data-basemap="geoscene-gray" title="GeoScene 灰色简约风格">
+<div class="bm-preview bm-light"></div><div class="bm-label">浅灰简约</div>
 </button>
 <button class="basemap-btn" data-basemap="gray-vector" title="浅色简约风格">
 <div class="bm-preview bm-light"></div><div class="bm-label">浅色底图</div>
+<button class="basemap-btn" data-basemap="geoscene-warm" title="GeoScene 暖色复古风格">
+<div class="bm-preview bm-dark"></div><div class="bm-label">暖色复古</div>
 </button>
 </div>
 <div style="margin-top:10px;">
@@ -278,7 +291,6 @@ const poets = [
 const hhl = { name: "黄鹤楼", lng: 114.296944, lat: 30.546944 };
  
 const map = new Map({
-basemap: "streets-vector"
 basemap: (function() {
 try {
 var cdn = "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png";
@@ -293,6 +305,7 @@ return new Basemap({ baseLayers: [tileLyr] });
 return "gray-vector";
 }
 })()
+basemap: "tianditu-vector"
 });
  
 const view = new MapView({
@@ -314,7 +327,6 @@ const lineLayer = new GraphicsLayer({ title: "路径线条" });
 const flowLayer = new GraphicsLayer({ title: "流动箭头" });
 const hhlLayer  = new GraphicsLayer({ title: "黄鹤楼" });
  
-map.addMany([lineLayer, poetLayer, flowLayer, hhlLayer]);
 try {
 map.layers.addMany([lineLayer, poetLayer, flowLayer, hhlLayer]);
 } catch(e) {
@@ -549,23 +561,6 @@ routes.forEach(r => r.progress = Math.random() * 0.3);
 flowLayer.removeAll();
 }
  
-function buildFallbackBasemap(style) {
-const theme = style === "dark" ? "dark_all"
-: style === "light" ? "light_all"
-: style === "streets" ? "osm"
-: "osm";
-const cdn = style === "dark"
-? "https://{subDomain}.basemaps.cartocdn.com/dark_all/{level}/{col}/{row}{@2x}.png"
-: style === "light"
-? "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}{@2x}.png"
-: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png";
-const subs = style === "osm" ? ["a","b","c"] : ["a","b","c","d"];
-const tileLyr = new WebTileLayer({
-urlTemplate: cdn,
-subDomains: subs,
-copyright: "© OpenStreetMap / CARTO"
-});
-return new Basemap({ baseLayers: [tileLyr] });
 function makeTileBasemap(config) {
 try {
 var layer = new WebTileLayer({
@@ -621,6 +616,15 @@ url: "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}{@2
 subs: ["a","b","c","d"],
 copy: "© CARTO Voyager Light"
 }
+var FALLBACK_BASEMAP = "tianditu-vector";
+var OFFICIAL_GEOSCENE_BASEMAPS = {
+"tianditu-vector": true,
+"tianditu-topography": true,
+"tianditu-image": true,
+"geoscene-blue": true,
+"geoscene-community": true,
+"geoscene-gray": true,
+"geoscene-warm": true
 };
  
 function switchBasemap(basemapId, btnEl) {
@@ -629,8 +633,6 @@ if (btnEl) btnEl.classList.add("active");
 if (basemapId === "transparent") {
 try { map.basemap = null; } catch(e){}
 try { document.body.classList.add("transparent-mode"); } catch(e){}
-const surface = document.querySelector(".esri-view-surface");
-if (surface) surface.style.background = "transparent";
 try {
 var s = document.querySelector(".esri-view-surface");
 if (s) s.style.background = "transparent";
@@ -638,26 +640,7 @@ if (s) s.style.background = "transparent";
 return;
 }
 try { document.body.classList.remove("transparent-mode"); } catch(e){}
-const surface = document.querySelector(".esri-view-surface");
-if (surface) surface.style.background = "";
 try {
-if (basemapId === "streets-vector" || basemapId === "hybrid") {
-map.basemap = basemapId;
-map.basemap.load().catch(function() {
-map.basemap = buildFallbackBasemap("osm");
-});
-} else if (basemapId === "dark-gray-vector") {
-map.basemap = basemapId;
-map.basemap.load().catch(function() {
-map.basemap = buildFallbackBasemap("dark");
-});
-} else if (basemapId === "gray-vector") {
-map.basemap = basemapId;
-map.basemap.load().catch(function() {
-map.basemap = buildFallbackBasemap("light");
-});
-} else {
-map.basemap = basemapId;
 var s = document.querySelector(".esri-view-surface");
 if (s) s.style.background = "";
 } catch(e){}
@@ -666,13 +649,16 @@ var cfg = TILE_PRESETS[basemapId];
 if (cfg) {
 var bm = makeTileBasemap(cfg);
 if (bm) { map.basemap = bm; return; }
+if (!OFFICIAL_GEOSCENE_BASEMAPS[basemapId]) {
+basemapId = FALLBACK_BASEMAP;
 }
 map.basemap = "gray-vector";
+map.basemap = basemapId;
 } catch(err) {
-map.basemap = buildFallbackBasemap("streets");
 try {
 map.basemap = makeTileBasemap(TILE_PRESETS["streets-vector"]);
 } catch(e){}
+try { map.basemap = FALLBACK_BASEMAP; } catch(e){}
 }
 }
  
@@ -688,16 +674,6 @@ document.querySelectorAll(".basemap-btn").forEach(btn => {
 btn.onclick = function() {
 switchBasemap(btn.getAttribute("data-basemap"), btn);
 };
-});
- 
-view.watch("map.basemap", function(bm) {
-if (bm) {
-bm.watch("loadStatus", function(s) {
-if (s === "failed") {
-try { map.basemap = buildFallbackBasemap("streets"); } catch(e){}
-}
-});
-}
 });
 });
 });
